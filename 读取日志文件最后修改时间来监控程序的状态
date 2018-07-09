@@ -1,0 +1,55 @@
+import os
+import time
+import sys
+import logging
+
+
+'''昨日整天时间获取'''
+def zuori_data(self):
+    zuo = []
+    zuo.append(time.strftime(str(datetime.date.fromtimestamp(time.time() - 86640))+' 00:00:00'))#获取前一天时间
+    zuo.append(time.strftime('%Y-%m-%d 00:00:00', time.localtime()))#获取实时日期
+    return zuo
+    
+
+'''今日实时时间获取'''
+def today_date(self):
+    today = []
+    today.append(time.strftime('%Y-%m-%d 00:00:00', time.localtime()))
+    today.append(str(datetime.datetime.now()).split('.')[0])
+    return today
+    
+    
+'''日志文件最后修改时间'''
+def file_time_read(indexd_log_flie):
+    date_stamp = time.localtime(os.stat(indexd_log_flie).st_mtime)
+    date = time.strftime('%Y-%m-%d %H:%M:%S', date_stamp)
+    return date
+
+
+def main():
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S', filename='/var/log/yisa_qingdao_j.log')
+    indexd_log_flie = '/var/log/yisa_get_msg.log'
+    date_key = {'time_1': '', 'time_2': ''}
+    get = 0
+    while True:
+        try:
+            logging.info('300秒计时结束')
+            date_key['time_1'] = file_time_read(indexd_log_flie)
+            time.sleep(300)
+            date_key['time_2'] = file_time_read(indexd_log_flie)
+            if date_key['time_1'] >= date_key['time_2']:
+                get += 1
+                os.system('python /yisa_oe/message/yisa_get_msg_from_activemq.py restart')
+                logging.info('市区取数据脚本停止,执行重启完毕')
+            if get > 2:
+                logging.info('重启未能奏效或频繁停止，程序结束')
+                sys.exit()
+        except Exception as e:
+            logging.error(str(e))
+
+
+if __name__ == '__main__':
+    main()
